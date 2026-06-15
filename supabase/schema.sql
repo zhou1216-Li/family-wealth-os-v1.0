@@ -18,20 +18,40 @@ VALUES (
 ) ON CONFLICT (id) DO NOTHING;
 
 -- Storage 策略：允许所有用户上传头像
-CREATE POLICY "Allow public upload" ON storage.objects
-  FOR INSERT WITH CHECK (bucket_id = 'avatars');
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'Allow public upload' AND tablename = 'objects') THEN
+    CREATE POLICY "Allow public upload" ON storage.objects
+      FOR INSERT WITH CHECK (bucket_id = 'avatars');
+  END IF;
+END $$;
 
 -- Storage 策略：允许所有用户查看头像
-CREATE POLICY "Allow public read" ON storage.objects
-  FOR SELECT USING (bucket_id = 'avatars');
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'Allow public read storage' AND tablename = 'objects') THEN
+    CREATE POLICY "Allow public read storage" ON storage.objects
+      FOR SELECT USING (bucket_id = 'avatars');
+  END IF;
+END $$;
 
 -- Storage 策略：允许用户更新自己的头像
-CREATE POLICY "Allow public update" ON storage.objects
-  FOR UPDATE USING (bucket_id = 'avatars');
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'Allow public update storage' AND tablename = 'objects') THEN
+    CREATE POLICY "Allow public update storage" ON storage.objects
+      FOR UPDATE USING (bucket_id = 'avatars');
+  END IF;
+END $$;
 
 -- Storage 策略：允许用户删除自己的头像
-CREATE POLICY "Allow public delete" ON storage.objects
-  FOR DELETE USING (bucket_id = 'avatars');
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'Allow public delete storage' AND tablename = 'objects') THEN
+    CREATE POLICY "Allow public delete storage" ON storage.objects
+      FOR DELETE USING (bucket_id = 'avatars');
+  END IF;
+END $$;
 
 -- ─── Accounts ───────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS accounts (
@@ -220,68 +240,321 @@ ALTER TABLE goals ENABLE ROW LEVEL SECURITY;
 ALTER TABLE family_members ENABLE ROW LEVEL SECURITY;
 
 -- Public read access (adjust as needed for your auth strategy)
-CREATE POLICY "Allow public read" ON accounts FOR SELECT USING (true);
-CREATE POLICY "Allow public read" ON transactions FOR SELECT USING (true);
-CREATE POLICY "Allow public read" ON assets FOR SELECT USING (true);
-CREATE POLICY "Allow public read" ON liabilities FOR SELECT USING (true);
-CREATE POLICY "Allow public read" ON budgets FOR SELECT USING (true);
-CREATE POLICY "Allow public read" ON goals FOR SELECT USING (true);
-CREATE POLICY "Allow public read" ON family_members FOR SELECT USING (true);
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'Allow public read accounts') THEN
+    CREATE POLICY "Allow public read accounts" ON accounts FOR SELECT USING (true);
+  END IF;
+END $$;
+
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'Allow public read transactions') THEN
+    CREATE POLICY "Allow public read transactions" ON transactions FOR SELECT USING (true);
+  END IF;
+END $$;
+
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'Allow public read assets') THEN
+    CREATE POLICY "Allow public read assets" ON assets FOR SELECT USING (true);
+  END IF;
+END $$;
+
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'Allow public read liabilities') THEN
+    CREATE POLICY "Allow public read liabilities" ON liabilities FOR SELECT USING (true);
+  END IF;
+END $$;
+
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'Allow public read budgets') THEN
+    CREATE POLICY "Allow public read budgets" ON budgets FOR SELECT USING (true);
+  END IF;
+END $$;
+
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'Allow public read goals') THEN
+    CREATE POLICY "Allow public read goals" ON goals FOR SELECT USING (true);
+  END IF;
+END $$;
+
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'Allow public read family_members') THEN
+    CREATE POLICY "Allow public read family_members" ON family_members FOR SELECT USING (true);
+  END IF;
+END $$;
 
 -- Public insert/update/delete for accounts
-CREATE POLICY "Allow public insert" ON accounts FOR INSERT WITH CHECK (true);
-CREATE POLICY "Allow public update" ON accounts FOR UPDATE USING (true);
-CREATE POLICY "Allow public delete" ON accounts FOR DELETE USING (true);
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'Allow public insert accounts') THEN
+    CREATE POLICY "Allow public insert accounts" ON accounts FOR INSERT WITH CHECK (true);
+  END IF;
+END $$;
+
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'Allow public update accounts') THEN
+    CREATE POLICY "Allow public update accounts" ON accounts FOR UPDATE USING (true);
+  END IF;
+END $$;
+
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'Allow public delete accounts') THEN
+    CREATE POLICY "Allow public delete accounts" ON accounts FOR DELETE USING (true);
+  END IF;
+END $$;
 
 -- Public insert/update/delete (adjust as needed)
-CREATE POLICY "Allow public insert" ON transactions FOR INSERT WITH CHECK (true);
-CREATE POLICY "Allow public update" ON transactions FOR UPDATE USING (true);
-CREATE POLICY "Allow public delete" ON transactions FOR DELETE USING (true);
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'Allow public insert transactions') THEN
+    CREATE POLICY "Allow public insert transactions" ON transactions FOR INSERT WITH CHECK (true);
+  END IF;
+END $$;
 
-CREATE POLICY "Allow public insert" ON assets FOR INSERT WITH CHECK (true);
-CREATE POLICY "Allow public update" ON assets FOR UPDATE USING (true);
-CREATE POLICY "Allow public delete" ON assets FOR DELETE USING (true);
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'Allow public update transactions') THEN
+    CREATE POLICY "Allow public update transactions" ON transactions FOR UPDATE USING (true);
+  END IF;
+END $$;
 
-CREATE POLICY "Allow public insert" ON liabilities FOR INSERT WITH CHECK (true);
-CREATE POLICY "Allow public update" ON liabilities FOR UPDATE USING (true);
-CREATE POLICY "Allow public delete" ON liabilities FOR DELETE USING (true);
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'Allow public delete transactions') THEN
+    CREATE POLICY "Allow public delete transactions" ON transactions FOR DELETE USING (true);
+  END IF;
+END $$;
 
-CREATE POLICY "Allow public insert" ON budgets FOR INSERT WITH CHECK (true);
-CREATE POLICY "Allow public update" ON budgets FOR UPDATE USING (true);
-CREATE POLICY "Allow public delete" ON budgets FOR DELETE USING (true);
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'Allow public insert assets') THEN
+    CREATE POLICY "Allow public insert assets" ON assets FOR INSERT WITH CHECK (true);
+  END IF;
+END $$;
 
-CREATE POLICY "Allow public insert" ON goals FOR INSERT WITH CHECK (true);
-CREATE POLICY "Allow public update" ON goals FOR UPDATE USING (true);
-CREATE POLICY "Allow public delete" ON goals FOR DELETE USING (true);
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'Allow public update assets') THEN
+    CREATE POLICY "Allow public update assets" ON assets FOR UPDATE USING (true);
+  END IF;
+END $$;
 
-CREATE POLICY "Allow public insert" ON family_members FOR INSERT WITH CHECK (true);
-CREATE POLICY "Allow public update" ON family_members FOR UPDATE USING (true);
-CREATE POLICY "Allow public delete" ON family_members FOR DELETE USING (true);
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'Allow public delete assets') THEN
+    CREATE POLICY "Allow public delete assets" ON assets FOR DELETE USING (true);
+  END IF;
+END $$;
+
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'Allow public insert liabilities') THEN
+    CREATE POLICY "Allow public insert liabilities" ON liabilities FOR INSERT WITH CHECK (true);
+  END IF;
+END $$;
+
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'Allow public update liabilities') THEN
+    CREATE POLICY "Allow public update liabilities" ON liabilities FOR UPDATE USING (true);
+  END IF;
+END $$;
+
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'Allow public delete liabilities') THEN
+    CREATE POLICY "Allow public delete liabilities" ON liabilities FOR DELETE USING (true);
+  END IF;
+END $$;
+
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'Allow public insert budgets') THEN
+    CREATE POLICY "Allow public insert budgets" ON budgets FOR INSERT WITH CHECK (true);
+  END IF;
+END $$;
+
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'Allow public update budgets') THEN
+    CREATE POLICY "Allow public update budgets" ON budgets FOR UPDATE USING (true);
+  END IF;
+END $$;
+
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'Allow public delete budgets') THEN
+    CREATE POLICY "Allow public delete budgets" ON budgets FOR DELETE USING (true);
+  END IF;
+END $$;
+
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'Allow public insert goals') THEN
+    CREATE POLICY "Allow public insert goals" ON goals FOR INSERT WITH CHECK (true);
+  END IF;
+END $$;
+
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'Allow public update goals') THEN
+    CREATE POLICY "Allow public update goals" ON goals FOR UPDATE USING (true);
+  END IF;
+END $$;
+
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'Allow public delete goals') THEN
+    CREATE POLICY "Allow public delete goals" ON goals FOR DELETE USING (true);
+  END IF;
+END $$;
+
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'Allow public insert family_members') THEN
+    CREATE POLICY "Allow public insert family_members" ON family_members FOR INSERT WITH CHECK (true);
+  END IF;
+END $$;
+
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'Allow public update family_members') THEN
+    CREATE POLICY "Allow public update family_members" ON family_members FOR UPDATE USING (true);
+  END IF;
+END $$;
+
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'Allow public delete family_members') THEN
+    CREATE POLICY "Allow public delete family_members" ON family_members FOR DELETE USING (true);
+  END IF;
+END $$;
 
 ALTER TABLE audit_logs ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "Allow public read" ON audit_logs FOR SELECT USING (true);
-CREATE POLICY "Allow public insert" ON audit_logs FOR INSERT WITH CHECK (true);
-CREATE POLICY "Allow public update" ON audit_logs FOR UPDATE USING (true);
-CREATE POLICY "Allow public delete" ON audit_logs FOR DELETE USING (true);
+
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'Allow public read audit_logs') THEN
+    CREATE POLICY "Allow public read audit_logs" ON audit_logs FOR SELECT USING (true);
+  END IF;
+END $$;
+
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'Allow public insert audit_logs') THEN
+    CREATE POLICY "Allow public insert audit_logs" ON audit_logs FOR INSERT WITH CHECK (true);
+  END IF;
+END $$;
+
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'Allow public update audit_logs') THEN
+    CREATE POLICY "Allow public update audit_logs" ON audit_logs FOR UPDATE USING (true);
+  END IF;
+END $$;
+
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'Allow public delete audit_logs') THEN
+    CREATE POLICY "Allow public delete audit_logs" ON audit_logs FOR DELETE USING (true);
+  END IF;
+END $$;
 
 ALTER TABLE categories ENABLE ROW LEVEL SECURITY;
 ALTER TABLE user_settings ENABLE ROW LEVEL SECURITY;
 ALTER TABLE login_history ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY "Allow public read" ON categories FOR SELECT USING (true);
-CREATE POLICY "Allow public insert" ON categories FOR INSERT WITH CHECK (true);
-CREATE POLICY "Allow public update" ON categories FOR UPDATE USING (true);
-CREATE POLICY "Allow public delete" ON categories FOR DELETE USING (true);
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'Allow public read categories') THEN
+    CREATE POLICY "Allow public read categories" ON categories FOR SELECT USING (true);
+  END IF;
+END $$;
 
-CREATE POLICY "Allow public read" ON user_settings FOR SELECT USING (true);
-CREATE POLICY "Allow public insert" ON user_settings FOR INSERT WITH CHECK (true);
-CREATE POLICY "Allow public update" ON user_settings FOR UPDATE USING (true);
-CREATE POLICY "Allow public delete" ON user_settings FOR DELETE USING (true);
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'Allow public insert categories') THEN
+    CREATE POLICY "Allow public insert categories" ON categories FOR INSERT WITH CHECK (true);
+  END IF;
+END $$;
 
-CREATE POLICY "Allow public read" ON login_history FOR SELECT USING (true);
-CREATE POLICY "Allow public insert" ON login_history FOR INSERT WITH CHECK (true);
-CREATE POLICY "Allow public update" ON login_history FOR UPDATE USING (true);
-CREATE POLICY "Allow public delete" ON login_history FOR DELETE USING (true);
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'Allow public update categories') THEN
+    CREATE POLICY "Allow public update categories" ON categories FOR UPDATE USING (true);
+  END IF;
+END $$;
+
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'Allow public delete categories') THEN
+    CREATE POLICY "Allow public delete categories" ON categories FOR DELETE USING (true);
+  END IF;
+END $$;
+
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'Allow public read user_settings') THEN
+    CREATE POLICY "Allow public read user_settings" ON user_settings FOR SELECT USING (true);
+  END IF;
+END $$;
+
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'Allow public insert user_settings') THEN
+    CREATE POLICY "Allow public insert user_settings" ON user_settings FOR INSERT WITH CHECK (true);
+  END IF;
+END $$;
+
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'Allow public update user_settings') THEN
+    CREATE POLICY "Allow public update user_settings" ON user_settings FOR UPDATE USING (true);
+  END IF;
+END $$;
+
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'Allow public delete user_settings') THEN
+    CREATE POLICY "Allow public delete user_settings" ON user_settings FOR DELETE USING (true);
+  END IF;
+END $$;
+
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'Allow public read login_history') THEN
+    CREATE POLICY "Allow public read login_history" ON login_history FOR SELECT USING (true);
+  END IF;
+END $$;
+
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'Allow public insert login_history') THEN
+    CREATE POLICY "Allow public insert login_history" ON login_history FOR INSERT WITH CHECK (true);
+  END IF;
+END $$;
+
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'Allow public update login_history') THEN
+    CREATE POLICY "Allow public update login_history" ON login_history FOR UPDATE USING (true);
+  END IF;
+END $$;
+
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'Allow public delete login_history') THEN
+    CREATE POLICY "Allow public delete login_history" ON login_history FOR DELETE USING (true);
+  END IF;
+END $$;
 
 -- =====================================================
 -- Seed Data (Optional - run after table creation)
@@ -295,7 +568,8 @@ INSERT INTO accounts (name, type, balance, currency, icon, color, institution) V
   ('支付宝余额宝', 'savings', 38000, 'CNY', '💰', '#3498db', '蚂蚁金服'),
   ('证券账户', 'investment', 145000, 'CNY', '📈', '#e67e22', '华泰证券'),
   ('基金账户', 'investment', 60000, 'CNY', '📊', '#9b59b6', '天天基金'),
-  ('招行信用卡', 'credit', -8500, 'CNY', '💳', '#e74c3c', '招商银行');
+  ('招行信用卡', 'credit', -8500, 'CNY', '💳', '#e74c3c', '招商银行')
+ON CONFLICT DO NOTHING;
 
 -- Insert sample assets
 INSERT INTO assets (type, name, value, currency, icon, color) VALUES
@@ -308,13 +582,15 @@ INSERT INTO assets (type, name, value, currency, icon, color) VALUES
   ('黄金', '黄金投资', 15000, 'CNY', '🥇', '#f39c12'),
   ('房产', '上海住宅', 2800000, 'CNY', '🏠', '#1abc9c'),
   ('车辆', 'Tesla Model 3', 220000, 'CNY', '🚗', '#34495e'),
-  ('现金', '现金', 5000, 'CNY', '💵', '#27ae60');
+  ('现金', '现金', 5000, 'CNY', '💵', '#27ae60')
+ON CONFLICT DO NOTHING;
 
 -- Insert sample family members
 INSERT INTO family_members (name, role, avatar, email, join_date) VALUES
   ('张伟', 'admin', '张', 'zhangwei@gmail.com', '2023-01-01'),
   ('李娜', 'editor', '李', 'lina@gmail.com', '2023-01-01'),
-  ('张小明', 'viewer', '明', '', '2024-03-15');
+  ('张小明', 'viewer', '明', '', '2024-03-15')
+ON CONFLICT DO NOTHING;
 
 -- Insert sample budgets
 INSERT INTO budgets (category, monthly_limit, spent, icon, color) VALUES
@@ -325,20 +601,23 @@ INSERT INTO budgets (category, monthly_limit, spent, icon, color) VALUES
   ('教育', 3000, 4800, '📚', '#f39c12'),
   ('医疗', 1000, 680, '🏥', '#1abc9c'),
   ('通讯', 400, 298, '📱', '#e67e22'),
-  ('水电', 600, 486, '💡', '#16a085');
+  ('水电', 600, 486, '💡', '#16a085')
+ON CONFLICT (category) DO NOTHING;
 
 -- Insert sample goals
 INSERT INTO goals (name, target_amount, current_amount, target_date, monthly_contribution, icon, color) VALUES
   ('孩子大学教育基金', 500000, 88000, '2033-09-01', 3500, '🎓', '#3498db'),
   ('出国旅游基金', 80000, 32000, '2025-07-01', 5000, '✈️', '#2ecc71'),
   ('应急储备金', 200000, 163000, '2025-06-01', 8000, '🛡️', '#e67e22'),
-  ('提前退休目标', 8000000, 1432700, '2040-01-01', 15000, '🏖️', '#9b59b6');
+  ('提前退休目标', 8000000, 1432700, '2040-01-01', 15000, '🏖️', '#9b59b6')
+ON CONFLICT DO NOTHING;
 
 -- Insert sample liabilities
 INSERT INTO liabilities (type, name, total_amount, amount, interest_rate, monthly_payment, start_date, end_date, notes) VALUES
   ('房贷', '上海住宅房贷', 2100000, 1850000, 4.1, 9200, '2020-06-01', '2050-06-01', '等额还款，每月15日自动扣款'),
   ('车贷', 'Tesla 车贷', 150000, 45000, 5.5, 2100, '2023-03-01', '2025-03-01', '即将还清'),
-  ('信用卡', '招行信用卡', 50000, 8500, 18.0, 8500, '2024-12-01', '2025-01-10', '账单日10号，还款日次月10号');
+  ('信用卡', '招行信用卡', 50000, 8500, 18.0, 8500, '2024-12-01', '2025-01-10', '账单日10号，还款日次月10号')
+ON CONFLICT DO NOTHING;
 
 -- Insert sample categories
 INSERT INTO categories (name, type, icon, color) VALUES
@@ -361,4 +640,5 @@ INSERT INTO categories (name, type, icon, color) VALUES
   ('信用卡还款', 'expense', '💳', '#9b59b6'),
   ('礼物', 'expense', '🎁', '#f1c40f'),
   ('旅游', 'expense', '✈️', '#3498db'),
-  ('其他支出', 'expense', '📦', '#7f8c8d');
+  ('其他支出', 'expense', '📦', '#7f8c8d')
+ON CONFLICT (name, type) DO NOTHING;
