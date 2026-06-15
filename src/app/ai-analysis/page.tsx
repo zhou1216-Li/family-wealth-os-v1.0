@@ -44,8 +44,57 @@ export default function AIAnalysisPage() {
   const [analysisResult, setAnalysisResult] = useState<AnalysisResponse | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [showGoalModal, setShowGoalModal] = useState(false)
+  const [goalTitle, setGoalTitle] = useState('')
+  const [goalAmount, setGoalAmount] = useState('')
+  const [goalDate, setGoalDate] = useState('')
+  const [showPlanModal, setShowPlanModal] = useState(false)
+  const [planTitle, setPlanTitle] = useState('')
+  const [showReminderModal, setShowReminderModal] = useState(false)
+  const [reminderTitle, setReminderTitle] = useState('')
+  const [reminderDate, setReminderDate] = useState('')
+  const [toasts, setToasts] = useState<{ id: string; message: string; type: 'success' | 'error' }[]>([])
   
   const analysisTypes = getAllAnalysisTypes()
+
+  const addToast = (message: string, type: 'success' | 'error' = 'success') => {
+    const id = Date.now().toString()
+    setToasts(prev => [...prev, { id, message, type }])
+    setTimeout(() => setToasts(prev => prev.filter(t => t.id !== id)), 3000)
+  }
+
+  const handleSetGoal = () => {
+    if (!goalTitle || !goalAmount) {
+      addToast('请填写完整的目标信息', 'error')
+      return
+    }
+    addToast(`目标「${goalTitle}」已设定，金额：${goalAmount}元`)
+    setShowGoalModal(false)
+    setGoalTitle('')
+    setGoalAmount('')
+    setGoalDate('')
+  }
+
+  const handleCreatePlan = () => {
+    if (!planTitle) {
+      addToast('请填写计划名称', 'error')
+      return
+    }
+    addToast(`计划「${planTitle}」已创建`)
+    setShowPlanModal(false)
+    setPlanTitle('')
+  }
+
+  const handleSetReminder = () => {
+    if (!reminderTitle || !reminderDate) {
+      addToast('请填写完整的提醒信息', 'error')
+      return
+    }
+    addToast(`提醒「${reminderTitle}」已设置，日期：${reminderDate}`)
+    setShowReminderModal(false)
+    setReminderTitle('')
+    setReminderDate('')
+  }
 
   // 处理上下文输入变化
   const handleContextChange = (key: string, value: string) => {
@@ -331,7 +380,15 @@ export default function AIAnalysisPage() {
                           </div>
                           <p className="text-sm text-muted-foreground">{rec.description}</p>
                         </div>
-                        <button className="flex items-center gap-1 px-3 py-1.5 bg-primary/10 text-primary rounded-lg text-sm hover:bg-primary/20 transition-colors">
+                        <button 
+                          onClick={() => {
+                            if (rec.action === '设定目标') setShowGoalModal(true)
+                            else if (rec.action === '制定计划') setShowPlanModal(true)
+                            else if (rec.action === '设置提醒') setShowReminderModal(true)
+                            else addToast(`已执行：${rec.action}`)
+                          }}
+                          className="flex items-center gap-1 px-3 py-1.5 bg-primary/10 text-primary rounded-lg text-sm hover:bg-primary/20 transition-colors"
+                        >
                           {rec.action}
                           <ChevronRight size={14} />
                         </button>
@@ -376,6 +433,159 @@ export default function AIAnalysisPage() {
           </ul>
         </div>
       </div>
+
+      {/* Toast 提示 */}
+      <div className="fixed bottom-4 right-4 z-50 space-y-2">
+        {toasts.map(toast => (
+          <div key={toast.id} className={`px-4 py-3 rounded-xl shadow-lg flex items-center gap-2 ${
+            toast.type === 'success' ? 'bg-emerald-500 text-white' : 'bg-rose-500 text-white'
+          }`}>
+            {toast.type === 'success' ? <CheckCircle size={16} /> : <AlertTriangle size={16} />}
+            <span className="text-sm">{toast.message}</span>
+          </div>
+        ))}
+      </div>
+
+      {/* 设定目标模态框 */}
+      {showGoalModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-card border border-border rounded-2xl p-6 w-full max-w-md">
+            <h3 className="text-lg font-semibold mb-4">设定财务目标</h3>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium mb-2">目标名称</label>
+                <input
+                  type="text"
+                  value={goalTitle}
+                  onChange={(e) => setGoalTitle(e.target.value)}
+                  placeholder="如：买房首付"
+                  className="w-full px-4 py-2.5 bg-muted border border-border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-2">目标金额（元）</label>
+                <input
+                  type="number"
+                  value={goalAmount}
+                  onChange={(e) => setGoalAmount(e.target.value)}
+                  placeholder="如：500000"
+                  className="w-full px-4 py-2.5 bg-muted border border-border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-2">目标日期（可选）</label>
+                <input
+                  type="date"
+                  value={goalDate}
+                  onChange={(e) => setGoalDate(e.target.value)}
+                  className="w-full px-4 py-2.5 bg-muted border border-border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
+                />
+              </div>
+            </div>
+            <div className="flex gap-3 mt-6">
+              <button
+                onClick={() => setShowGoalModal(false)}
+                className="flex-1 px-4 py-2.5 bg-muted rounded-xl text-sm hover:bg-muted/80 transition-colors"
+              >
+                取消
+              </button>
+              <button
+                onClick={handleSetGoal}
+                className="flex-1 px-4 py-2.5 bg-primary text-primary-foreground rounded-xl text-sm hover:bg-primary/90 transition-colors"
+              >
+                确认设定
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 制定计划模态框 */}
+      {showPlanModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-card border border-border rounded-2xl p-6 w-full max-w-md">
+            <h3 className="text-lg font-semibold mb-4">制定计划</h3>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium mb-2">计划名称</label>
+                <input
+                  type="text"
+                  value={planTitle}
+                  onChange={(e) => setPlanTitle(e.target.value)}
+                  placeholder="如：每月定投计划"
+                  className="w-full px-4 py-2.5 bg-muted border border-border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-2">计划说明</label>
+                <textarea
+                  placeholder="描述你的计划内容..."
+                  rows={3}
+                  className="w-full px-4 py-2.5 bg-muted border border-border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 resize-none"
+                />
+              </div>
+            </div>
+            <div className="flex gap-3 mt-6">
+              <button
+                onClick={() => setShowPlanModal(false)}
+                className="flex-1 px-4 py-2.5 bg-muted rounded-xl text-sm hover:bg-muted/80 transition-colors"
+              >
+                取消
+              </button>
+              <button
+                onClick={handleCreatePlan}
+                className="flex-1 px-4 py-2.5 bg-primary text-primary-foreground rounded-xl text-sm hover:bg-primary/90 transition-colors"
+              >
+                创建计划
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 设置提醒模态框 */}
+      {showReminderModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-card border border-border rounded-2xl p-6 w-full max-w-md">
+            <h3 className="text-lg font-semibold mb-4">设置提醒</h3>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium mb-2">提醒事项</label>
+                <input
+                  type="text"
+                  value={reminderTitle}
+                  onChange={(e) => setReminderTitle(e.target.value)}
+                  placeholder="如：缴纳房贷"
+                  className="w-full px-4 py-2.5 bg-muted border border-border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-2">提醒日期</label>
+                <input
+                  type="date"
+                  value={reminderDate}
+                  onChange={(e) => setReminderDate(e.target.value)}
+                  className="w-full px-4 py-2.5 bg-muted border border-border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
+                />
+              </div>
+            </div>
+            <div className="flex gap-3 mt-6">
+              <button
+                onClick={() => setShowReminderModal(false)}
+                className="flex-1 px-4 py-2.5 bg-muted rounded-xl text-sm hover:bg-muted/80 transition-colors"
+              >
+                取消
+              </button>
+              <button
+                onClick={handleSetReminder}
+                className="flex-1 px-4 py-2.5 bg-primary text-primary-foreground rounded-xl text-sm hover:bg-primary/90 transition-colors"
+              >
+                设置提醒
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </MainLayout>
   )
 }
