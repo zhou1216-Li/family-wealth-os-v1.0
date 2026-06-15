@@ -1,13 +1,29 @@
 'use client'
 
+import { useState } from 'react'
 import { MainLayout } from '@/components/shared/MainLayout'
 import { StatCard } from '@/components/shared/StatCard'
 import { useApp } from '@/contexts/AppContext'
 import { fmtCurrency, fmtPct } from '@/lib/formatters'
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, BarChart, Bar, XAxis, YAxis, CartesianGrid } from 'recharts'
+import { Pencil, X, Check, Plus } from 'lucide-react'
+import type { Budget } from '@/types'
+
+interface EditFormState {
+  id: string | null
+  monthlyLimit: number
+}
 
 export default function BudgetPage() {
-  const { budgets, transactions } = useApp()
+  const { budgets, updateBudget, addBudget, deleteBudget } = useApp()
+  const [editForm, setEditForm] = useState<EditFormState>({ id: null, monthlyLimit: 0 })
+  const [showAddForm, setShowAddForm] = useState(false)
+  const [newBudget, setNewBudget] = useState({
+    category: '',
+    monthlyLimit: 0,
+    icon: '💰',
+    color: '#3b82f6',
+  })
 
   const totalBudget = budgets.reduce((sum, b) => sum + b.monthlyLimit, 0)
   const totalSpent = budgets.reduce((sum, b) => sum + b.spent, 0)
@@ -24,6 +40,35 @@ export default function BudgetPage() {
   }))
 
   const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#06b6d4', '#84cc16']
+
+  const handleEditStart = (budget: Budget) => {
+    setEditForm({ id: budget.id, monthlyLimit: budget.monthlyLimit })
+  }
+
+  const handleEditCancel = () => {
+    setEditForm({ id: null, monthlyLimit: 0 })
+  }
+
+  const handleEditSave = async () => {
+    if (editForm.id) {
+      await updateBudget(editForm.id, { monthlyLimit: editForm.monthlyLimit })
+      setEditForm({ id: null, monthlyLimit: 0 })
+    }
+  }
+
+  const handleAddBudget = async () => {
+    if (newBudget.category && newBudget.monthlyLimit > 0) {
+      await addBudget({
+        category: newBudget.category,
+        monthlyLimit: newBudget.monthlyLimit,
+        spent: 0,
+        icon: newBudget.icon,
+        color: newBudget.color,
+      })
+      setNewBudget({ category: '', monthlyLimit: 0, icon: '💰', color: '#3b82f6' })
+      setShowAddForm(false)
+    }
+  }
 
   return (
     <MainLayout title="预算管理" subtitle="追踪和控制每月支出">
@@ -109,12 +154,59 @@ export default function BudgetPage() {
 
         {/* Budget Details */}
         <div className="bg-card border border-border rounded-2xl p-6">
-          <h3 className="text-sm text-foreground mb-4">预算明细</h3>
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-sm text-foreground">预算明细</h3>
+            <button
+              onClick={() => setShowAddForm(!showAddForm)}
+              className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-primary text-primary-foreground text-xs font-medium hover:bg-primary/90 transition-colors"
+            >
+              <Plus size={14} />
+              添加预算
+            </button>
+          </div>
+
+          {/* Add Budget Form */}
+          {showAddForm && (
+            <div className="mb-4 p-4 rounded-xl bg-secondary/50 border border-border">
+              <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
+                <input
+                  type="text"
+                  placeholder="分类名称"
+                  value={newBudget.category}
+                  onChange={e => setNewBudget({ ...newBudget, category: e.target.value })}
+                  className="px-3 py-2 rounded-lg bg-background border border-border text-foreground text-sm"
+                />
+                <input
+                  type="number"
+                  placeholder="月度限额"
+                  value={newBudget.monthlyLimit || ''}
+                  onChange={e => setNewBudget({ ...newBudget, monthlyLimit: Number(e.target.value) })}
+                  className="px-3 py-2 rounded-lg bg-background border border-border text-foreground text-sm"
+                />
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={handleAddBudget}
+                    className="px-4 py-2 rounded-lg bg-emerald-500 text-white text-sm font-medium hover:bg-emerald-600 transition-colors"
+                  >
+                    保存
+                  </button>
+                  <button
+                    onClick={() => setShowAddForm(false)}
+                    className="px-4 py-2 rounded-lg bg-secondary text-foreground text-sm font-medium hover:bg-secondary/80 transition-colors"
+                  >
+                    取消
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
           <div className="space-y-4">
             {budgets.map(budget => {
               const percentage = Math.min(100, (budget.spent / budget.monthlyLimit) * 100)
               const isOverBudget = budget.spent > budget.monthlyLimit
               const remaining = budget.monthlyLimit - budget.spent
+              const isEditing = editForm.id === budget.id
 
               return (
                 <div key={budget.id} className="p-4 rounded-xl bg-secondary/50 hover:bg-secondary transition-colors">
@@ -125,17 +217,51 @@ export default function BudgetPage() {
                       </div>
                       <div>
                         <h4 className="text-sm text-foreground">{budget.category}</h4>
-                        <p className="text-xs text-muted-foreground">
-                          {fmtCurrency(budget.spent)} / {fmtCurrency(budget.monthlyLimit)}
-                        </p>
+                        {isEditing ? (
+                          <div className="flex items-center gap-2 mt-1">
+                            <input
+                              type="number"
+                              value={editForm.monthlyLimit}
+                              onChange={e => setEditForm({ ...editForm, monthlyLimit: Number(e.target.value) })}
+                              className="w-28 px-2 py-1 rounded bg-background border border-border text-sm text-foreground"
+                              autoFocus
+                            />
+                            <button
+                              onClick={handleEditSave}
+                              className="p-1 rounded hover:bg-emerald-500/20 text-emerald-500"
+                            >
+                              <Check size={16} />
+                            </button>
+                            <button
+                              onClick={handleEditCancel}
+                              className="p-1 rounded hover:bg-rose-500/20 text-rose-500"
+                            >
+                              <X size={16} />
+                            </button>
+                          </div>
+                        ) : (
+                          <p className="text-xs text-muted-foreground">
+                            {fmtCurrency(budget.spent)} / {fmtCurrency(budget.monthlyLimit)}
+                          </p>
+                        )}
                       </div>
                     </div>
-                    <div className="text-right">
-                      <div className={`text-lg font-semibold ${isOverBudget ? 'text-rose-400' : 'text-foreground'}`}>
-                        {fmtPct(percentage)}
-                      </div>
-                      <div className={`text-xs ${isOverBudget ? 'text-rose-400' : 'text-muted-foreground'}`}>
-                        {isOverBudget ? '超支' : '剩余'} {fmtCurrency(Math.abs(remaining))}
+                    <div className="flex items-center gap-2">
+                      {!isEditing && (
+                        <button
+                          onClick={() => handleEditStart(budget)}
+                          className="p-2 rounded-lg hover:bg-secondary text-muted-foreground hover:text-foreground transition-colors"
+                        >
+                          <Pencil size={16} />
+                        </button>
+                      )}
+                      <div className="text-right">
+                        <div className={`text-lg font-semibold ${isOverBudget ? 'text-rose-400' : 'text-foreground'}`}>
+                          {fmtPct(percentage)}
+                        </div>
+                        <div className={`text-xs ${isOverBudget ? 'text-rose-400' : 'text-muted-foreground'}`}>
+                          {isOverBudget ? '超支' : '剩余'} {fmtCurrency(Math.abs(remaining))}
+                        </div>
                       </div>
                     </div>
                   </div>

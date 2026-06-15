@@ -1,5 +1,5 @@
 import type {
-  Transaction, Asset, Liability, Budget, Goal, FamilyMember,
+  Transaction, Asset, Liability, Budget, Goal, FamilyMember, Category, Account,
   MonthlyDataPoint, NetWorthDataPoint, CategoryDataPoint,
 } from '@/types'
 
@@ -107,6 +107,41 @@ export const initialFamilyMembers: FamilyMember[] = [
   { id: 'u1', name: '张伟',   role: 'admin',  avatar: '张', email: 'zhangwei@gmail.com', joinDate: '2023-01-01' },
   { id: 'u2', name: '李娜',   role: 'editor', avatar: '李', email: 'lina@gmail.com',      joinDate: '2023-01-01' },
   { id: 'u3', name: '张小明', role: 'viewer', avatar: '明', email: '',                    joinDate: '2024-03-15' },
+]
+
+// ─── Categories ────────────────────────────────────────────────────────────────
+
+export const initialCategories: Category[] = [
+  { id: 'c1',  name: '工资',        type: 'income',  icon: '💼', color: '#2ecc71' },
+  { id: 'c2',  name: '奖金',        type: 'income',  icon: '🎁', color: '#f39c12' },
+  { id: 'c3',  name: '投资收益',    type: 'income',  icon: '📈', color: '#3498db' },
+  { id: 'c4',  name: '副业',        type: 'income',  icon: '💡', color: '#9b59b6' },
+  { id: 'c5',  name: '其他收入',    type: 'income',  icon: '💰', color: '#1abc9c' },
+  { id: 'c6',  name: '餐饮',        type: 'expense', icon: '🍽️', color: '#e74c3c' },
+  { id: 'c7',  name: '购物',        type: 'expense', icon: '🛍️', color: '#3498db' },
+  { id: 'c8',  name: '交通',        type: 'expense', icon: '🚗', color: '#2ecc71' },
+  { id: 'c9',  name: '娱乐',        type: 'expense', icon: '🎮', color: '#9b59b6' },
+  { id: 'c10', name: '教育',        type: 'expense', icon: '📚', color: '#f39c12' },
+  { id: 'c11', name: '医疗',        type: 'expense', icon: '🏥', color: '#1abc9c' },
+  { id: 'c12', name: '通讯',        type: 'expense', icon: '📱', color: '#e67e22' },
+  { id: 'c13', name: '水电',        type: 'expense', icon: '💡', color: '#16a085' },
+  { id: 'c14', name: '房租',        type: 'expense', icon: '🏠', color: '#c0392b' },
+  { id: 'c15', name: '房贷',        type: 'expense', icon: '🏢', color: '#e74c3c' },
+  { id: 'c16', name: '车贷',        type: 'expense', icon: '🚘', color: '#34495e' },
+  { id: 'c17', name: '信用卡还款',  type: 'expense', icon: '💳', color: '#9b59b6' },
+  { id: 'c18', name: '礼物',        type: 'expense', icon: '🎁', color: '#f1c40f' },
+  { id: 'c19', name: '旅游',        type: 'expense', icon: '✈️', color: '#3498db' },
+  { id: 'c20', name: '其他支出',    type: 'expense', icon: '📦', color: '#7f8c8d' },
+]
+
+export const initialAccounts: Account[] = [
+  { id: 'acc1', name: '招商银行储蓄卡', type: 'checking', balance: 85000,   currency: 'CNY', icon: '🏦', color: '#e74c3c', institution: '招商银行', notes: '', createdAt: '2023-01-01' },
+  { id: 'acc2', name: '工商银行储蓄卡', type: 'checking', balance: 42000,   currency: 'CNY', icon: '🏦', color: '#3498db', institution: '工商银行', notes: '', createdAt: '2023-01-01' },
+  { id: 'acc3', name: '微信零钱',       type: 'cash',    balance: 5200,    currency: 'CNY', icon: '💬', color: '#2ecc71', institution: '微信支付', notes: '', createdAt: '2023-06-15' },
+  { id: 'acc4', name: '支付宝余额宝',   type: 'savings', balance: 38000,   currency: 'CNY', icon: '💰', color: '#3498db', institution: '蚂蚁金服', notes: '', createdAt: '2023-03-01' },
+  { id: 'acc5', name: '证券账户',       type: 'investment', balance: 145000, currency: 'CNY', icon: '📈', color: '#e67e22', institution: '华泰证券', notes: '', createdAt: '2022-06-01' },
+  { id: 'acc6', name: '基金账户',       type: 'investment', balance: 60000,  currency: 'CNY', icon: '📊', color: '#9b59b6', institution: '天天基金', notes: '', createdAt: '2022-09-01' },
+  { id: 'acc7', name: '招行信用卡',     type: 'credit',  balance: -8500,   currency: 'CNY', icon: '💳', color: '#e74c3c', institution: '招商银行', notes: '', createdAt: '2023-04-01' },
 ]
 
 // ─── Chart data ───────────────────────────────────────────────────────────────

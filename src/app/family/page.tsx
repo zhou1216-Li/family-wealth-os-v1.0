@@ -11,7 +11,7 @@ import { EmptyState } from '@/components/shared/EmptyState'
 import type { FamilyMember } from '@/types'
 
 export default function FamilyPage() {
-  const { familyMembers, updateMemberRole, removeMember } = useApp()
+  const { familyMembers, addMember, updateMember, removeMember } = useApp()
   const [formOpen, setFormOpen] = useState(false)
   const [deleteId, setDeleteId] = useState<string | null>(null)
   const [editId, setEditId] = useState<string | null>(null)
@@ -47,7 +47,8 @@ export default function FamilyPage() {
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
-    // In real app, would add member via API
+    if (editId) updateMember(editId, form)
+    else addMember(form)
     setFormOpen(false)
   }
 

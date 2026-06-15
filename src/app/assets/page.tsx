@@ -7,15 +7,20 @@ import { DeleteConfirmDialog } from '@/components/shared/DeleteConfirmDialog'
 import { EmptyState } from '@/components/shared/EmptyState'
 import { StatCard } from '@/components/shared/StatCard'
 import { useApp, type Asset } from '@/contexts/AppContext'
-import { Plus, Pencil, Trash2, TrendingUp } from 'lucide-react'
+import { Plus, Pencil, Trash2, RefreshCw, TrendingUp, TrendingDown, Download } from 'lucide-react'
 import { fmtCurrency, fmtCompact } from '@/lib/formatters'
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts'
+import { useRefreshAssetValues, type AssetWithValue } from '@/hooks/useMarketData'
+import { exportAssets } from '@/services/csvService'
 
 export default function AssetsPage() {
   const { assets, addAsset, updateAsset, deleteAsset } = useApp()
   const [formOpen, setFormOpen] = useState(false)
   const [editId, setEditId] = useState<string | null>(null)
   const [deleteId, setDeleteId] = useState<string | null>(null)
+  const [refreshResults, setRefreshResults] = useState<Map<string, AssetWithValue>>(new Map())
+
+  const { refresh: refreshValues, loading: refreshing } = useRefreshAssetValues()
 
   const EMPTY_FORM: Omit<Asset, 'id'> = {
     type: '银行卡',
@@ -24,12 +29,15 @@ export default function AssetsPage() {
     currency: 'CNY',
     icon: '🏦',
     color: '#3b82f6',
+    code: '',
   }
 
   const [form, setForm] = useState<Omit<Asset, 'id'>>(EMPTY_FORM)
 
   const totalAssets = assets.reduce((sum, a) => sum + a.value, 0)
   const ASSET_TYPES = ['银行卡', '现金', '微信', '支付宝', '股票', '基金', '黄金', '房产', '车辆', '其他'] as const
+
+  const REFRESHABLE_TYPES = ['股票', '基金', '黄金']
 
   const assetDistribution = ASSET_TYPES.map(type => ({
     name: type,
@@ -59,6 +67,43 @@ export default function AssetsPage() {
   function handleDelete() {
     if (deleteId) deleteAsset(deleteId)
     setDeleteId(null)
+  }
+
+  async function handleRefreshValues() {
+    const refreshableAssets = assets.filter(a => REFRESHABLE_TYPES.includes(a.type as typeof REFRESHABLE_TYPES[number]))
+    
+    if (refreshableAssets.length === 0) {
+      alert('没有可刷新的资产（仅支持股票、基金、黄金）')
+      return
+    }
+
+    const results = await refreshValues(
+      refreshableAssets.map(a => ({
+        id: a.id,
+        type: a.type,
+        name: a.name,
+        value: a.value,
+        code: a.code,
+      }))
+    )
+
+    const resultMap = new Map<string, AssetWithValue>()
+    results.forEach(r => resultMap.set(r.id, r))
+    setRefreshResults(resultMap)
+  }
+
+  function applyNewValue(assetId: string) {
+    const result = refreshResults.get(assetId)
+    if (result && result.newValue !== null) {
+      updateAsset(assetId, { value: result.newValue })
+      const newResults = new Map(refreshResults)
+      newResults.delete(assetId)
+      setRefreshResults(newResults)
+    }
+  }
+
+  function handleExport() {
+    exportAssets(assets)
   }
 
   const asset = assets.find(a => a.id === deleteId)
@@ -147,15 +192,32 @@ export default function AssetsPage() {
           </div>
         </div>
 
-        {/* Assets List */}
+        {/* Assets List Header */}
         <div className="flex items-center justify-between">
           <h2 className="text-sm text-foreground">资产明细</h2>
-          <button
-            onClick={openAdd}
-            className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-primary text-primary-foreground text-sm hover:bg-primary/90 transition-colors shadow shadow-primary/20"
-          >
-            <Plus size={15} />添加资产
-          </button>
+          <div className="flex gap-2">
+            <button
+              onClick={handleExport}
+              className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-secondary text-foreground text-sm hover:bg-secondary/80 transition-colors"
+            >
+              <Download size={15} />
+              导出CSV
+            </button>
+            <button
+              onClick={handleRefreshValues}
+              disabled={refreshing}
+              className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-secondary text-foreground text-sm hover:bg-secondary/80 transition-colors disabled:opacity-50"
+            >
+              <RefreshCw size={15} className={refreshing ? 'animate-spin' : ''} />
+              {refreshing ? '刷新中...' : '刷新价值'}
+            </button>
+            <button
+              onClick={openAdd}
+              className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-primary text-primary-foreground text-sm hover:bg-primary/90 transition-colors shadow shadow-primary/20"
+            >
+              <Plus size={15} />添加资产
+            </button>
+          </div>
         </div>
 
         {assets.length === 0 ? (
@@ -169,32 +231,69 @@ export default function AssetsPage() {
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {assets.map(a => (
-              <div key={a.id} className="bg-card border border-border rounded-2xl p-5 hover:border-primary/20 transition-colors group">
-                <div className="flex items-start justify-between mb-4">
-                  <div className="w-12 h-12 rounded-xl flex items-center justify-center text-2xl" style={{ background: `${a.color}20` }}>
-                    {a.icon}
+            {assets.map(a => {
+              const refreshResult = refreshResults.get(a.id)
+              const hasNewValue = refreshResult && refreshResult.newValue !== null
+              const isPositive = refreshResult && refreshResult.changePercent && refreshResult.changePercent > 0
+
+              return (
+                <div key={a.id} className="bg-card border border-border rounded-2xl p-5 hover:border-primary/20 transition-colors group">
+                  <div className="flex items-start justify-between mb-4">
+                    <div className="w-12 h-12 rounded-xl flex items-center justify-center text-2xl" style={{ background: `${a.color}20` }}>
+                      {a.icon}
+                    </div>
+                    <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <button
+                        onClick={() => openEdit(a)}
+                        className="w-8 h-8 rounded-lg hover:bg-secondary flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors"
+                      >
+                        <Pencil size={14} />
+                      </button>
+                      <button
+                        onClick={() => setDeleteId(a.id)}
+                        className="w-8 h-8 rounded-lg hover:bg-rose-400/15 flex items-center justify-center text-muted-foreground hover:text-rose-400 transition-colors"
+                      >
+                        <Trash2 size={14} />
+                      </button>
+                    </div>
                   </div>
-                  <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <button
-                      onClick={() => openEdit(a)}
-                      className="w-8 h-8 rounded-lg hover:bg-secondary flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors"
-                    >
-                      <Pencil size={14} />
-                    </button>
-                    <button
-                      onClick={() => setDeleteId(a.id)}
-                      className="w-8 h-8 rounded-lg hover:bg-rose-400/15 flex items-center justify-center text-muted-foreground hover:text-rose-400 transition-colors"
-                    >
-                      <Trash2 size={14} />
-                    </button>
+                  <h4 className="text-sm text-foreground mb-1">{a.name}</h4>
+                  <p className="text-xs text-muted-foreground mb-3">
+                    {a.type} · {a.currency}
+                    {a.code && <span className="ml-1">({a.code})</span>}
+                  </p>
+                  
+                  <div className="flex items-end justify-between">
+                    <div>
+                      <div className="text-xl text-foreground font-semibold">{fmtCurrency(a.value)}</div>
+                      {hasNewValue && (
+                        <div className="flex items-center gap-2 mt-1">
+                          <span className={`text-xs flex items-center gap-0.5 ${isPositive ? 'text-green-500' : 'text-red-500'}`}>
+                            {isPositive ? <TrendingUp size={12} /> : <TrendingDown size={12} />}
+                            {refreshResult.changePercent?.toFixed(2)}%
+                          </span>
+                          <button
+                            onClick={() => applyNewValue(a.id)}
+                            className="text-xs text-primary hover:underline"
+                          >
+                            应用新值
+                          </button>
+                        </div>
+                      )}
+                      {refreshResult?.error && (
+                        <div className="text-xs text-red-400 mt-1">{refreshResult.error}</div>
+                      )}
+                    </div>
+                    {hasNewValue && (
+                      <div className="text-right">
+                        <div className="text-xs text-muted-foreground">新值</div>
+                        <div className="text-sm font-medium text-foreground">{fmtCurrency(refreshResult.newValue!)}</div>
+                      </div>
+                    )}
                   </div>
                 </div>
-                <h4 className="text-sm text-foreground mb-1">{a.name}</h4>
-                <p className="text-xs text-muted-foreground mb-3">{a.type} · {a.currency}</p>
-                <div className="text-xl text-foreground font-semibold">{fmtCurrency(a.value)}</div>
-              </div>
-            ))}
+              )
+            })}
           </div>
         )}
 
@@ -230,6 +329,24 @@ export default function AssetsPage() {
                 required
               />
             </div>
+
+            {['股票', '基金'].includes(form.type) && (
+              <div>
+                <label className="block text-xs text-muted-foreground mb-2">
+                  {form.type === '股票' ? '股票代码' : '基金代码'}
+                  <span className="text-muted-foreground/60 ml-1">
+                    ({form.type === '股票' ? '如 sh600000, sz000001' : '如 000001'})
+                  </span>
+                </label>
+                <input
+                  type="text"
+                  value={form.code || ''}
+                  onChange={e => setForm({ ...form, code: e.target.value })}
+                  placeholder={form.type === '股票' ? 'sh600000' : '000001'}
+                  className="w-full px-4 py-2.5 rounded-xl bg-secondary border border-border text-foreground text-sm focus:outline-none focus:border-primary/60 transition-colors"
+                />
+              </div>
+            )}
 
             <div>
               <label className="block text-xs text-muted-foreground mb-2">价值</label>
